@@ -2,11 +2,11 @@ package SS14.Ktra;
 
 import java.sql.*;
 
-public class TransferMoneyFull {
+public class Ktra {
 
     private static final String URL = "jdbc:mysql://localhost:3306/test";
     private static final String USER = "root";
-    private static final String PASSWORD = "123456";
+    private static final String PASSWORD = "khanhkhanh";
 
     public static void main(String[] args) {
         transfer("ACC01", "ACC02", 1000);
@@ -16,10 +16,8 @@ public class TransferMoneyFull {
 
         try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD)) {
 
-            // 1. Transaction
             conn.setAutoCommit(false);
 
-            // 2. Kiểm tra tài khoản + số dư
             String checkSQL = "SELECT Balance FROM Accounts WHERE AccountId = ?";
             try (PreparedStatement ps = conn.prepareStatement(checkSQL)) {
 
@@ -37,26 +35,21 @@ public class TransferMoneyFull {
                 }
             }
 
-            // 3. Gọi Stored Procedure
             String callSQL = "{call sp_UpdateBalance(?, ?)}";
             try (CallableStatement cs = conn.prepareCall(callSQL)) {
 
-                // Trừ tiền
                 cs.setString(1, fromId);
                 cs.setDouble(2, -amount);
                 cs.execute();
 
-                // Cộng tiền
                 cs.setString(1, toId);
                 cs.setDouble(2, amount);
                 cs.execute();
             }
 
-            // 4. Commit
             conn.commit();
             System.out.println("Chuyển khoản thành công!");
 
-            // 5. In kết quả cuối (ăn 10đ)
             String resultSQL = "SELECT * FROM Accounts WHERE AccountId IN (?, ?)";
 
             try (PreparedStatement ps2 = conn.prepareStatement(resultSQL)) {
